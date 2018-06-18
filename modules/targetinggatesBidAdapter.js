@@ -1,7 +1,5 @@
 /*
-  TODO
-  openx -> targetinggates
-  tg -> tg
+  TargetingGates PreBid Module by Wider Planet, Inc.
 */
 import { config } from 'src/config';
 import { registerBidder } from 'src/adapters/bidderFactory';
