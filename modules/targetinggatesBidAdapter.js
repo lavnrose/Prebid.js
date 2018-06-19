@@ -1,12 +1,23 @@
 /*
   TargetingGates PreBid Module by Wider Planet, Inc.
 */
-import { config } from 'src/config';
-import { registerBidder } from 'src/adapters/bidderFactory';
+import {
+    config
+} from 'src/config';
+import {
+    registerBidder
+} from 'src/adapters/bidderFactory';
 import * as utils from 'src/utils';
-import { userSync } from 'src/userSync';
-import { BANNER, VIDEO } from 'src/mediaTypes';
-import { parse } from 'src/url';
+import {
+    userSync
+} from 'src/userSync';
+import {
+    BANNER,
+    VIDEO
+} from 'src/mediaTypes';
+import {
+    parse
+} from 'src/url';
 
 // const SUPPORTED_AD_TYPES = [BANNER, NATIVE, NATIVEVIDEO, VIDEO];
 const SUPPORTED_AD_TYPES = [BANNER, VIDEO];
@@ -46,7 +57,9 @@ export const spec = {
 
         return requests;
     },
-    interpretResponse: function({ body: tgResponseObj }, serverRequest) {
+    interpretResponse: function({
+        body: tgResponseObj
+    }, serverRequest) {
         let mediaType = getMediaTypeFromRequest(serverRequest);
         switch (mediaType) {
             case VIDEO:
@@ -68,6 +81,38 @@ export const spec = {
             let url = utils.deepAccess(responses, '0.body.ads.pixels') ||
                 utils.deepAccess(responses, '0.body.pixels') ||
                 '//adtg.widerplanet.com/delivery/pdirect.php';
+            /*
+            // //astg.widerplanet.com/delivery/wpc.php?v=1&ver=4.0&r=1&md=bs&ga=1df4nk6-16ec81t-3-1&eid=4-cf1e72bfe9b200d09c785bd435a8ad12dc1348820dee37df1cc48d4f2cd3ef70f059178fefd87a71fe2e6a926b17c80fceeb9239782c6a842c1b3b25eaba64938a9fe550d1ae3301589dd9e7dd67d606&ty=Home&ti=30735&device=web&charset=UTF-8&tc=1529299340984&loc=http%3A%2F%2Fwww.widerplanet.com.%2F
+
+            Scheme: https
+            Protocol: https
+            Authority: astg.widerplanet.com
+            Host: astg.widerplanet.com
+            Hostname: astg.widerplanet.com
+            Subdomain: astg
+            Domain: widerplanet.com
+            Tld: com
+            Resource: /delivery/wpc.php?v=1&ver=4.0&r=1&md=bs&ga=1df4nk6-16ec81t-3-1&eid=4-cf1e72bfe9b200d09c785bd435a8ad12dc1348820dee37df1cc48d4f2cd3ef70f059178fefd87a71fe2e6a926b17c80fceeb9239782c6a842c1b3b25eaba64938a9fe550d1ae3301589dd9e7dd67d606&ty=Home&ti=30735&device=web&charset=UTF-8&tc=1529299340984&loc=http%3A%2F%2Fwww.widerplanet.com.%2F
+            Directory: /delivery
+            Path: /delivery/wpc.php
+            File name: wpc.php
+            File suffix: php
+            Query string: v=1&ver=4.0&r=1&md=bs&ga=1df4nk6-16ec81t-3-1&eid=4-cf1e72bfe9b200d09c785bd435a8ad12dc1348820dee37df1cc48d4f2cd3ef70f059178fefd87a71fe2e6a926b17c80fceeb9239782c6a842c1b3b25eaba64938a9fe550d1ae3301589dd9e7dd67d606&ty=Home&ti=30735&device=web&charset=UTF-8&tc=1529299340984&loc=http%3A%2F%2Fwww.widerplanet.com.%2F
+
+            'v': 1
+            'ver': 4.0
+            'r': 1
+            'md': bs
+            'ga': 1df4nk6-16ec81t-3-1
+            'eid': 4-cf1e72bfe9b200d09c785bd435a8ad12dc1348820dee37df1cc48d4f2cd3ef70f059178fefd87a71fe2e6a926b17c80fceeb9239782c6a842c1b3b25eaba64938a9fe550d1ae3301589dd9e7dd67d606
+            'ty': Home
+            'ti': 30735
+            'device': web
+            'charset': UTF-8
+            'tc': 1529299340984
+            'loc': http://www.widerplanet.com./
+            */
+
             return [{
                 type: 'iframe',
                 url: url,
@@ -80,7 +125,10 @@ function isVideoRequest(bidRequest) {
     return utils.deepAccess(bidRequest, 'mediaTypes.video') || bidRequest.mediaType === VIDEO;
 }
 
-function createBannerBidResponses(tgResponseObj, { bids, startTime }) {
+function createBannerBidResponses(tgResponseObj, {
+    bids,
+    startTime
+}) {
     let adUnits = tgResponseObj.ads.ad;
     let bidResponses = [];
     for (let i = 0; i < adUnits.length; i++) {
@@ -273,7 +321,10 @@ function buildtgBannerRequest(bids, bidderRequest) {
         method: 'GET',
         url: url,
         data: queryParams,
-        payload: { 'bids': bids, 'startTime': new Date() }
+        payload: {
+            'bids': bids,
+            'startTime': new Date()
+        }
     };
 }
 
@@ -284,7 +335,10 @@ function buildTGVideoRequest(bid, bidderRequest) {
         method: 'GET',
         url: url,
         data: tgVideoParams,
-        payload: { 'bid': bid, 'startTime': new Date() }
+        payload: {
+            'bid': bid,
+            'startTime': new Date()
+        }
     };
 }
 
@@ -335,7 +389,10 @@ function generateVideoParameters(bid, bidderRequest) {
     return queryParams;
 }
 
-function createVideoBidResponses(response, { bid, startTime }) {
+function createVideoBidResponses(response, {
+    bid,
+    startTime
+}) {
     let bidResponses = [];
 
     if (response !== undefined && response.vastUrl !== '' && response.pub_rev !== '') {
