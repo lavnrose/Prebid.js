@@ -13,6 +13,8 @@ import {
 } from 'src/userSync';
 import {
     BANNER,
+    NATIVE,
+    NATIVEVIDEO,
     VIDEO
 } from 'src/mediaTypes';
 import {
@@ -20,8 +22,8 @@ import {
 } from 'src/url';
 
 // const SUPPORTED_AD_TYPES = [BANNER, NATIVE, NATIVEVIDEO, VIDEO];
-const SUPPORTED_AD_TYPES = [BANNER, VIDEO];
-const BIDDER_CODE = 'tg';
+const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE, NATIVEVIDEO];
+const BIDDER_CODE = 'targetinggates';
 const BIDDER_CONFIG = 'hb_pb';
 const BIDDER_VERSION = '1.0.0';
 
@@ -125,6 +127,52 @@ function isVideoRequest(bidRequest) {
     return utils.deepAccess(bidRequest, 'mediaTypes.video') || bidRequest.mediaType === VIDEO;
 }
 
+function createNativeBidResponses(tgResponseObj, {
+    bids,
+    startTime
+}) {
+    let adUnits = tgResponseObj.ads.ad;
+    let bidResponses = [];
+    for (let i = 0; i < adUnits.length; i++) {
+        let adUnit = adUnits[i];
+        let adUnitIdx = parseInt(adUnit.idx, 10);
+        let bidResponse = {};
+
+        bidResponse.requestId = bids[adUnitIdx].bidId;
+
+        if (adUnit.pub_rev) {
+            bidResponse.cpm = Number(adUnit.pub_rev) / 1000;
+        } else {
+            // No fill, do not add the bidresponse
+            continue;
+        }
+        let creative = adUnit.creative[0];
+        if (creative) {
+            bidResponse.width = creative.width;
+            bidResponse.height = creative.height;
+        }
+        bidResponse.creativeId = creative.id;
+        bidResponse.ad = adUnit.html;
+        if (adUnit.deal_id) {
+            bidResponse.dealId = adUnit.deal_id;
+        }
+        // default 5 mins
+        bidResponse.ttl = 300;
+        // true is net, false is gross
+        bidResponse.netRevenue = true;
+        bidResponse.currency = adUnit.currency;
+
+        // additional fields to add
+        if (adUnit.tbd) {
+            bidResponse.tbd = adUnit.tbd;
+        }
+        bidResponse.ts = adUnit.ts;
+        bidResponses.push(bidResponse);
+        registerBeacon(BANNER, adUnit, startTime);
+    }
+    return bidResponses;
+}
+
 function createBannerBidResponses(tgResponseObj, {
     bids,
     startTime
@@ -165,9 +213,7 @@ function createBannerBidResponses(tgResponseObj, {
             bidResponse.tbd = adUnit.tbd;
         }
         bidResponse.ts = adUnit.ts;
-
         bidResponses.push(bidResponse);
-
         registerBeacon(BANNER, adUnit, startTime);
     }
     return bidResponses;
@@ -390,6 +436,42 @@ function generateVideoParameters(bid, bidderRequest) {
 }
 
 function createVideoBidResponses(response, {
+    bid,
+    startTime
+}) {
+    let bidResponses = [];
+
+    if (response !== undefined && response.vastUrl !== '' && response.pub_rev !== '') {
+        let vastQueryParams = parse(response.vastUrl).search || {};
+        let bidResponse = {};
+        bidResponse.requestId = bid.bidId;
+        bidResponse.bidderCode = BIDDER_CODE;
+        // default 5 mins
+        bidResponse.ttl = 300;
+        // true is net, false is gross
+        bidResponse.netRevenue = true;
+        bidResponse.currency = response.currency;
+        bidResponse.cpm = Number(response.pub_rev) / 1000;
+        bidResponse.width = response.width;
+        bidResponse.height = response.height;
+        bidResponse.creativeId = response.adid;
+        bidResponse.vastUrl = response.vastUrl;
+        bidResponse.mediaType = VIDEO;
+
+        // enrich adunit with vast parameters
+        response.ph = vastQueryParams.ph;
+        response.colo = vastQueryParams.colo;
+        response.ts = vastQueryParams.ts;
+
+        bidResponses.push(bidResponse);
+
+        registerBeacon(VIDEO, response, startTime)
+    }
+
+    return bidResponses;
+}
+
+function createNativeVideoBidResponses(response, {
     bid,
     startTime
 }) {
