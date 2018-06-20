@@ -98,7 +98,7 @@ export const spec = {
 };
 
 /**
- * Callback for bids, after the call to PulsePoint completes.
+ * Callback for bids, after the call to TargetingGates completes.
  */
 function bidResponseAvailable(bidRequest, bidResponse) {
     const idToImpMap = {};
