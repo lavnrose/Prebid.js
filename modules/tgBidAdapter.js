@@ -106,7 +106,7 @@ export const spec = {
             imp: bidRequests.map(slot => impression(slot)),
             site: site(bidRequests),
             app: app(bidRequests),
-            device: device(),
+            device: device(bidderRequest),
         };
         applyGdpr(bidderRequest, request);
         return {
@@ -274,20 +274,23 @@ function impression(slot) {
         video: videoImpression(slot),
         // Attaching GDPR Consent Params
         // slot.params.user.gender ????
-        user: {
-            gender: conf.gender ? conf.gender.trim() : UNDEFINED,
-            yob: conf.yob ? conf.yob.trim() : UNDEFINED,
-            geo: {
-                lat: conf.geo.lat ? conf.geo.lat.trim() : UNDEFINED,
-                lon: conf.geo.lon ? conf.geo.lon.trim() : UNDEFINED
-            },
-            ext: {
-                consent: bidderRequest.gdprConsent.consentString
-            }
-        },
+        user: getUser(slot),
+        /*
+                user: {
+                    gender: conf.gender ? conf.gender.trim() : UNDEFINED,
+                    yob: conf.yob ? conf.yob.trim() : UNDEFINED,
+                    geo: {
+                        lat: slot.params.geo.lat ? conf.geo.lat.trim() : UNDEFINED,
+                        lon: slot.params.geo.lon ? conf.geo.lon.trim() : UNDEFINED
+                    },
+                    ext: {
+                        consent: bidderRequest.gdprConsent.consentString
+                    }
+                },
+        */
         regs {
             ext: {
-                gdpr: (bidderRequest.gdprConsent.gdprApplies ? 1 : 0)
+                gdpr: (slot.params.gdprConsent.gdprApplies ? 1 : 0)
             }
         },
         ext: {
@@ -460,7 +463,7 @@ function referrer() {
 /**
  * Produces an OpenRTB Device object.
  */
-function device() {
+function device(bidderRequest) {
     const lat = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.latitude : '';
     const lon = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.longitude : '';
     const ifa = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.ifa : '';
@@ -581,20 +584,31 @@ function adSize(slot) {
 }
 
 /**
+ * Get User object from slot.
+ */
+function getUser(slot) {
+    return {
+        gender: slot.params.gender ? slot.params.gender.trim() : UNDEFINED,
+        yob: slot.params.yob ? slot.params.yob.trim() : UNDEFINED,
+        ext: {
+            consent: slot.params.gdprConsent ? slot.params.gdprConsent.consentString : 0
+        }
+    };
+}
+
+
+/**
  * Applies GDPR parameters to request.
  */
 function applyGdpr(bidderRequest, ortbRequest) {
     if (bidderRequest && bidderRequest.gdprConsent) {
-        ortbRequest.regs = {
-            ext: {
-                gdpr: bidderRequest.gdprConsent.gdprApplies ? 1 : 0
-            }
-        };
-        ortbRequest.user = {
-            ext: {
-                consent: bidderRequest.gdprConsent.consentString
-            }
-        };
+        if (!ortbRequest.regs) ortbRequest.regs = {};
+        if (!ortbRequest.regs.ext) ortbRequest.regs.ext = {};
+        ortbRequest.regs.ext.gdpr = bidderRequest.gdprConsent.gdprApplies ? 1 : 0;
+
+        if (!ortbRequest.user) rtbRequest.user = {};
+        if (!ortbRequest.user.ext) ortbRequest.user.ext = {};
+        ortbRequest.user.ext.consent = bidderRequest.gdprConsent.consentString ? bidderRequest.gdprConsent.consentString : 0;
     }
 }
 
