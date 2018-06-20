@@ -47,8 +47,9 @@ import {
 const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE];
 const BIDDER_CODE = 'tg';
 const BIDDER_ALIASES = ['targetinggate', 'widerplanet'];
-const BIDDER_CONFIG = 'hb_pb';
-const BIDDER_VERSION = '1.0.0';
+
+// const BIDDER_CONFIG = 'hb_pb';
+// const BIDDER_VERSION = '1.0.0';
 
 const NATIVE_DEFAULTS = {
     TITLE_LEN: 80,
@@ -67,7 +68,13 @@ const TEST_BID = 1; // Test Bid
 const UNDEFINED = undefined;
 
 const CUSTOM_PARAMS = {
-    'zoneid': '', // Custom page url
+    'zoneid': '', // Publisher's slot id in TargetingGates
+    'affiliateid': '', // Publisher's id in TargetingGates
+    'tagid': '', // Publisher's management slot id
+    'location_signature': '', // Hashed required parameter
+    'wh': '',
+    'buyeruid': '', // OAID
+    'hceid': '', // Hashed Email
     'gender': '', // User gender
     'yob': '', // User year of birth
     'lat': '', // User location - Latitude
@@ -96,7 +103,7 @@ export const spec = {
     aliases: BIDDER_ALIASES,
     // supportedMediaTypes: ['banner', 'native'],
     // aliases: ['targetinggate', 'targetinggates'],
-    isBidRequestValid: bid => (!!(bid && bid.params && bid.params.cp && bid.params.ct && bid.params.zoneid && bid.params.location_signature)),
+    isBidRequestValid: bid => (!!(bid && bid.params && bid.params.affiliateid && bid.params.tagid && bid.params.zoneid && bid.params.location_signature)),
 
     buildRequests: (bidRequests, bidderRequest) => {
         const request = {
@@ -268,7 +275,7 @@ function impression(slot) {
         bidfloorcur: DEFAULT_CURRENCY,
         bidfloor: slot.params.bidFloor || '0.000001',
         secure: isSecure(),
-        tagid: slot.params.ct.toString(),
+        tagid: slot.params.tagid.toString(),
         banner: banner(slot),
         native: nativeImpression(slot),
         video: videoImpression(slot),
@@ -409,7 +416,7 @@ function dataAsset(id, params, type, defaultLen) {
  * Produces an OpenRTB site object.
  */
 function site(bidderRequest) {
-    const pubId = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.cp : '0';
+    const pubId = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.affiliateid : '0';
     const appParams = bidderRequest[0].params.app;
     if (!appParams) {
         return {
@@ -432,7 +439,7 @@ function site(bidderRequest) {
  * Produces an OpenRTB App object.
  */
 function app(bidderRequest) {
-    const pubId = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.cp : '0';
+    const pubId = bidderRequest && bidderRequest.length > 0 ? bidderRequest[0].params.affiliateid : '0';
     const appParams = bidderRequest[0].params.app;
     if (appParams) {
         return {
@@ -570,8 +577,8 @@ function parse(rawResponse) {
  * Determines the AdSize for the slot.
  */
 function adSize(slot) {
-    if (slot.params.cf) {
-        const size = slot.params.cf.toUpperCase().split('X');
+    if (slot.params.wh) {
+        const size = slot.params.wh.toUpperCase().split('X');
         const width = parseInt(slot.params.cw || size[0], 10);
         const height = parseInt(slot.params.ch || size[1], 10);
         return [width, height];
@@ -591,6 +598,9 @@ function getUser(slot) {
         gender: slot.params.gender ? slot.params.gender.trim() : UNDEFINED,
         yob: slot.params.yob ? slot.params.yob.trim() : UNDEFINED,
         ext: {
+            buyeruid: lot.params.buyeruid.trim(): UNDEFINED,
+            hcuid: slot.params.hcuid.trim(): UNDEFINED,
+            hceid: slot.params.hceid.trim(): UNDEFINED,
             consent: slot.params.gdprConsent ? slot.params.gdprConsent.consentString : 0
         }
     };
@@ -605,6 +615,7 @@ function applyGdpr(bidderRequest, ortbRequest) {
         if (!ortbRequest.regs) ortbRequest.regs = {};
         if (!ortbRequest.regs.ext) ortbRequest.regs.ext = {};
         ortbRequest.regs.ext.gdpr = bidderRequest.gdprConsent.gdprApplies ? 1 : 0;
+
 
         if (!ortbRequest.user) rtbRequest.user = {};
         if (!ortbRequest.user.ext) ortbRequest.user.ext = {};
