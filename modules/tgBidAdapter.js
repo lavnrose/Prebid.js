@@ -13,17 +13,11 @@
  *
  */
 
-
 import {
     config
 } from 'src/config';
 import * as utils from 'src/utils';
-/*
-import {
-    logError,
-    getTopWindowLocation
-} from 'src/utils';
-*/
+
 import {
     registerBidder
 } from 'src/adapters/bidderFactory';
@@ -50,6 +44,8 @@ const BIDDER_ALIASES = ['targetinggate', 'widerplanet'];
 
 // const BIDDER_CONFIG = 'hb_pb';
 // const BIDDER_VERSION = '1.0.0';
+// const BIDDER_VERSION_RTB = '2.3';
+// const BIDDER_VERSION_NATIVE = '1.1';
 
 const NATIVE_DEFAULTS = {
     TITLE_LEN: 80,
@@ -93,7 +89,7 @@ const DEFAULT_PROTOCOLS = [2, 3, 5, 6];
 const DEFAULT_APIS = [1, 2];
 
 
-const USYNCURL = '//astg.widerplanet.com/delivery/wpg.php?affiliateid=';
+const CM_USYNCURL = '//astg.widerplanet.com/delivery/wpg.php?affiliateid=';
 const BIDDER_ENDPOINT_URL = '//adtg.widerplanet.com/delivery/pdirect.php?sl=prebid';
 // const BIDDER_ENDPOINT_URL = '//hbopenbid.pubmatic.com/translator?source=prebid-client';
 
@@ -101,8 +97,6 @@ export const spec = {
     code: BIDDER_CODE,
     supportedMediaTypes: SUPPORTED_AD_TYPES,
     aliases: BIDDER_ALIASES,
-    // supportedMediaTypes: ['banner', 'native'],
-    // aliases: ['targetinggate', 'targetinggates'],
     isBidRequestValid: bid => (!!(bid && bid.params && bid.params.affiliateid && bid.params.tagid && bid.params.zoneid && bid.params.location_signature)),
 
     buildRequests: (bidRequests, bidderRequest) => {
@@ -132,24 +126,19 @@ export const spec = {
     interpretResponse: (response, request) => (
         bidResponseAvailable(request, response)
     ),
-    /*
-        getUserSyncs: syncOptions => {
-            if (syncOptions.iframeEnabled) {
-                return [{
-                    type: 'iframe',
-                    url: '//astg.widerplanet.com/delivery/wpg.php'
-                }];
-            } else if (syncOptions.pixelEnabled) {
-                return [{
-                    type: 'image',
-                    url: '//astg.widerplanet.com/delivery/wpg.php'
-                }];
-            }
-        }
-    */
 
+    /**
+     * User Cookie Sync method with GDPR before Bid Request
+     *
+     * getUserSyncs: syncOptions => {}
+     *
+     * @param {*} syncOptions Method for Cookie Sync.
+     * @param {*} response Response Object
+     * @param {*} gdprConsent Object for GDPR
+     * @return {Cm[]} An array of bids which were nested inside the server.
+     */
     getUserSyncs: (syncOptions, response, gdprConsent) => {
-        let syncurl = USYNCURL + publisherId;
+        let syncurl = CM_USYNCURL + publisherId;
 
         // Attaching GDPR Consent Params in UserSync url
         if (gdprConsent) {
@@ -203,16 +192,7 @@ function bidResponseAvailable(bidRequest, bidResponse) {
                 netRevenue: DEFAULT_NET_REVENUE,
                 currency: DEFAULT_CURRENCY
             };
-            /*
-            if (idToImpMap[id]['native']) {
-                bid['native'] = nativeResponse(idToImpMap[id], idToBidMap[id]);
-                bid.mediaType = 'native';
-            } else {
-                bid.ad = idToBidMap[id].adm;
-                bid.width = idToImpMap[id].banner.w;
-                bid.height = idToImpMap[id].banner.h;
-            }
-            */
+
             if (idToImpMap[id]['native']) {
                 bid['native'] = nativeResponse(idToImpMap[id], idToBidMap[id]);
                 let nurl = idToBidMap[id].nurl;
@@ -252,6 +232,13 @@ function bidResponseAvailable(bidRequest, bidResponse) {
     return bids;
 }
 
+/**
+ *
+ * Auto compleate function for bid.ext
+ *
+ * @param {*} bid Bid Object
+ * @param {*} tgrtbBid OpenRTB Bid Object
+ */
 function applyExt(bid, tgrtbBid) {
     if (tgrtbBid && tgrtbBid.ext) {
         bid.ttl = tgrtbBid.ext.ttl || bid.ttl;
@@ -268,6 +255,9 @@ function applyExt(bid, tgrtbBid) {
 
 /**
  * Produces an OpenRTBImpression from a slot config.
+ *
+ * @param {*} slot Slot Object
+ * @return {*} OpenRTB Impression Object
  */
 function impression(slot) {
     return {
@@ -279,23 +269,10 @@ function impression(slot) {
         banner: banner(slot),
         native: nativeImpression(slot),
         video: videoImpression(slot),
-        // Attaching GDPR Consent Params
         // slot.params.user.gender ????
         user: getUser(slot),
-        /*
-                user: {
-                    gender: conf.gender ? conf.gender.trim() : UNDEFINED,
-                    yob: conf.yob ? conf.yob.trim() : UNDEFINED,
-                    geo: {
-                        lat: slot.params.geo.lat ? conf.geo.lat.trim() : UNDEFINED,
-                        lon: slot.params.geo.lon ? conf.geo.lon.trim() : UNDEFINED
-                    },
-                    ext: {
-                        consent: bidderRequest.gdprConsent.consentString
-                    }
-                },
-        */
-        regs {
+        // Attaching GDPR Consent Params
+        regs: {
             ext: {
                 gdpr: (slot.params.gdprConsent.gdprApplies ? 1 : 0)
             }
@@ -307,6 +284,12 @@ function impression(slot) {
     };
 }
 
+/**
+ * Video Impression Object
+ *
+ * @param {*} slot Slot Object
+ * @returns {*} object Video Object
+ */
 function videoImpression(slot) {
     if (slot.mediaType === 'video' || utils.deepAccess(slot, 'mediaTypes.video')) {
         const sizes = adSize(slot);
@@ -327,6 +310,9 @@ function videoImpression(slot) {
 
 /**
  * Produces an OpenRTB Banner object for the slot given.
+ *
+ * @param {*}  slot Slot Object
+ * @returns {*} object Slot width with height
  */
 function banner(slot) {
     const size = adSize(slot);
@@ -351,7 +337,6 @@ function nativeImpression(slot) {
             request: JSON.stringify({
                 assets
             }),
-            // ver: '1.1',
             ver: NATIVE_DEFAULTS.VERSION,
         };
     }
@@ -423,11 +408,9 @@ function site(bidderRequest) {
             publisher: {
                 id: pubId.toString(),
             },
-            /*
-                        content: {
-                          language: (navigator.language || navigator.browserLanguage || navigator.userLanguage || navigator.systemLanguage),
-                        },
-            */
+            content: {
+                language: getLanguage(),
+            },
             ref: referrer(),
             page: getTopWindowLocation().href,
         }
@@ -504,21 +487,25 @@ function device(bidderRequest) {
         language: getLanguage(),
     };
     /*
-            bid_floor: parseFloat(bidRequest.params.floor) > 0 ? bidRequest.params.floor : 0,
-              charset: document.charSet || document.characterSet,
-              site_domain: document.location.hostname,
-              site_page: window.location.href,
-              subid: 'hb',
-              tmax: bidderRequest.timeout,
-              hb: '1',
-              name: document.location.hostname,
-              width: parse.width,
-              height: parse.height,
-              device_width: screen.width,
-              device_height: screen.height,
-              dnt: (navigator.doNotTrack == 'yes' || navigator.doNotTrack == '1' || navigator.msDoNotTrack == '1') ? 1 : 0,
-              secure: isSecure(),
-              make: navigator.vendor ? navigator.vendor : '',
+        bid_floor: parseFloat(bidRequest.params.floor) > 0 ? bidRequest.params.floor : 0,
+
+        charset: document.charSet || document.characterSet,
+
+        site_domain: document.location.hostname,
+        site_page: window.location.href,
+        subid: 'hb',
+        tmax: bidderRequest.timeout,
+        hb: '1',
+        name: document.location.hostname,
+
+        width: parse.width,
+        height: parse.height,
+        device_width: screen.width,
+        device_height: screen.height,
+
+        dnt: (navigator.doNotTrack == 'yes' || navigator.doNotTrack == '1' || navigator.msDoNotTrack == '1') ? 1 : 0,
+        secure: isSecure(),
+        make: navigator.vendor ? navigator.vendor : '',
     */
 }
 
@@ -598,8 +585,8 @@ function getUser(slot) {
         gender: slot.params.gender ? slot.params.gender.trim() : UNDEFINED,
         yob: slot.params.yob ? slot.params.yob.trim() : UNDEFINED,
         ext: {
-            buyeruid: lot.params.buyeruid.trim(): UNDEFINED,
-            hcuid: slot.params.hcuid.trim(): UNDEFINED,
+            buyeruid: lot.params.buyeruid ? lot.params.buyeruid.trim() : UNDEFINED,
+            hcuid: slot.params.hcuid ? slot.params.hcuid.trim() : UNDEFINED,
             hceid: slot.params.hceid.trim(): UNDEFINED,
             consent: slot.params.gdprConsent ? slot.params.gdprConsent.consentString : 0
         }
