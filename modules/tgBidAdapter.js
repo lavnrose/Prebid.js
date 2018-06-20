@@ -90,7 +90,7 @@ export const spec = {
         } else if (syncOptions.pixelEnabled) {
             return [{
                 type: 'image',
-                url: '////astg.widerplanet.com/delivery/wpg.php'
+                url: '//astg.widerplanet.com/delivery/wpg.php'
             }];
         }
     }
