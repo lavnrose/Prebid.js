@@ -11,6 +11,12 @@ Banner, Outstream and Native formats are supported.
 Please use `tg` as the bidder code.
 `targetinggate` and `targetinggates` aliases also supported as well.
 
+Publisher should get required value from Wider Planet, as below
+
+**affiliateid**: Media ID
+**zoneid**: Slot ID
+**location_signature**: Media Token
+
 # Test Parameters
 
 ```
