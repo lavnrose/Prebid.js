@@ -24,7 +24,20 @@ Please use `tg` as the bidder code.
               cp: 512379,
               ct: 486653
           }
-      }]
+      }, {
+        code: 'video-ad-player',
+        sizes: [640, 480],   // video player size
+        bids: [
+          {
+            bidder: 'tg',
+            mediaType : 'video',
+            params: {
+              zoneId: '30164',  //required parameter
+              host: 'cpm.metaadserving.com' //required parameter
+            }
+          }
+        ]
+      }
     },{
       code: 'native-ad-div',
       sizes: [[0, 0]],
