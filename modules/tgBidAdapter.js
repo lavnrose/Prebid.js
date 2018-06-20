@@ -2,8 +2,8 @@
  * TargetingGates Bid Adapter by Wider Planet, Inc.
  * Contact: adcon-team@widerplanet.com
  *
- * Aliases - pulseLite and pulsepointLite are supported for backwards compatibility.
- * Formats - Display/Native/Outstream formats supported.
+ * Aliases - ttargetinggate is supported for backwards compatibility.
+ * Formats - Display/Native/Native Video/Outstream formats supported.
  *
  * eslint dot-notation:0, quote-props:0
  */
