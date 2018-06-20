@@ -86,13 +86,17 @@ const DEFAULT_PROTOCOLS = [2, 3, 5, 6];
 const DEFAULT_APIS = [1, 2];
 
 
+const USYNCURL = '//astg.widerplanet.com/delivery/wpg.php?affiliateid=';
+const BIDDER_ENDPOINT_URL = '//adtg.widerplanet.com/delivery/pdirect.php?sl=prebid';
+// const BIDDER_ENDPOINT_URL = '//hbopenbid.pubmatic.com/translator?source=prebid-client';
+
 export const spec = {
     code: BIDDER_CODE,
     supportedMediaTypes: SUPPORTED_AD_TYPES,
     aliases: BIDDER_ALIASES,
     // supportedMediaTypes: ['banner', 'native'],
     // aliases: ['targetinggate', 'targetinggates'],
-    isBidRequestValid: bid => (!!(bid && bid.params && bid.params.cp && bid.params.ct)),
+    isBidRequestValid: bid => (!!(bid && bid.params && bid.params.cp && bid.params.ct && bid.params.zoneid && bid.params.location_signature)),
 
     buildRequests: (bidRequests, bidderRequest) => {
         const request = {
@@ -107,29 +111,59 @@ export const spec = {
         applyGdpr(bidderRequest, request);
         return {
             method: 'POST',
-            url: '//adtg.widerplanet.com/delivery/pdirect.php?sl=prebid',
+            url: BIDDER_ENDPOINT_URL,
             data: JSON.stringify(request),
         };
     },
 
+    /**
+     * Unpack the response from the server into a list of bids.
+     *
+     * @param {*} response A successful response from the server.
+     * @return {Bid[]} An array of bids which were nested inside the server.
+     */
     interpretResponse: (response, request) => (
         bidResponseAvailable(request, response)
     ),
+    /*
+        getUserSyncs: syncOptions => {
+            if (syncOptions.iframeEnabled) {
+                return [{
+                    type: 'iframe',
+                    url: '//astg.widerplanet.com/delivery/wpg.php'
+                }];
+            } else if (syncOptions.pixelEnabled) {
+                return [{
+                    type: 'image',
+                    url: '//astg.widerplanet.com/delivery/wpg.php'
+                }];
+            }
+        }
+    */
 
-    getUserSyncs: syncOptions => {
+    getUserSyncs: (syncOptions, response, gdprConsent) => {
+        let syncurl = USYNCURL + publisherId;
+
+        // Attaching GDPR Consent Params in UserSync url
+        if (gdprConsent) {
+            syncurl += '&gdpr=' + (gdprConsent.gdprApplies ? 1 : 0);
+            syncurl += '&gdpr_consent=' + encodeURIComponent(gdprConsent.consentString || '');
+        }
+
         if (syncOptions.iframeEnabled) {
             return [{
                 type: 'iframe',
-                url: '//astg.widerplanet.com/delivery/wpg.php'
+                url: syncurl
             }];
         } else if (syncOptions.pixelEnabled) {
             return [{
                 type: 'image',
-                url: '//astg.widerplanet.com/delivery/wpg.php'
+                url: syncurl
             }];
+        } else {
+            utils.logWarn('TargetingGates: Please enable iframe based user sync.');
         }
     }
-
 };
 
 /**
@@ -199,6 +233,11 @@ function bidResponseAvailable(bidRequest, bidResponse) {
                 bid.height = idToImpMap[id].banner.h;
                 bid.mediaType = 'banner';
             }
+
+            if (idToBidMap[id].ext && idToBidMap[id].ext.deal_channel) {
+                bid.dealChannel = dealChannelValues[bid.ext.deal_channel] || null;
+            }
+
             applyExt(bid, idToBidMap[id])
             bids.push(bid);
         }
@@ -214,7 +253,7 @@ function applyExt(bid, tgrtbBid) {
 
         bid.ext = {
             request_time: Math.round((new Date()).getTime() / 1000),
-            location_signature: '',
+            location_signature: tgrtbBid.params.location_signature,
             //            price_type: '',
         };
     }
@@ -231,8 +270,26 @@ function impression(slot) {
         secure: isSecure(),
         tagid: slot.params.ct.toString(),
         banner: banner(slot),
-        'native': nativeImpression(slot),
-        'video': videoImpression(slot),
+        native: nativeImpression(slot),
+        video: videoImpression(slot),
+        // Attaching GDPR Consent Params
+        // slot.params.user.gender ????
+        user: {
+            gender: conf.gender ? conf.gender.trim() : UNDEFINED,
+            yob: conf.yob ? conf.yob.trim() : UNDEFINED,
+            geo: {
+                lat: conf.geo.lat ? conf.geo.lat.trim() : UNDEFINED,
+                lon: conf.geo.lon ? conf.geo.lon.trim() : UNDEFINED
+            },
+            ext: {
+                consent: bidderRequest.gdprConsent.consentString
+            }
+        },
+        regs {
+            ext: {
+                gdpr: (bidderRequest.gdprConsent.gdprApplies ? 1 : 0)
+            }
+        },
         ext: {
             zoneid: slot.params.zoneid.toString(),
             cat: slot.params.cat.toString(),

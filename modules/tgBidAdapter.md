@@ -20,6 +20,8 @@ Please use `tg` as the bidder code.
       bids: [{
           bidder: 'tg',
           params: {
+              zoneid: '30164',                                          // required parameter
+              location_signature: 'feff819cdc9f9d70619211e55f1b0096',   // required parameter
               cf: '300X250',
               cp: 512379,
               ct: 486653
@@ -32,7 +34,8 @@ Please use `tg` as the bidder code.
             bidder: 'tg',
             mediaType : 'video',
             params: {
-              zoneId: '30164',  //required parameter
+              zoneid: '30164',                                          // required parameter
+              location_signature: 'feff819cdc9f9d70619211e55f1b0096',   // required parameter
               host: 'cpm.metaadserving.com' //required parameter
             }
           }
@@ -50,6 +53,8 @@ Please use `tg` as the bidder code.
       bids: [{
           bidder: 'tg',
           params: {
+              zoneid: '30164',                                          // required parameter
+              location_signature: 'feff819cdc9f9d70619211e55f1b0096',   // required parameter
               cp: 512379,
               ct: 505642
           }
