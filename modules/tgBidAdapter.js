@@ -423,7 +423,7 @@ function site(bidderRequest) {
         language: getLanguage(),
       },
       ref: referrer(),
-      page: getTopWindowLocation().href,
+      page: utils.getTopWindowLocation().href,
     }
   }
   return null;
