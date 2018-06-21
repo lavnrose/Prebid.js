@@ -1,1 +1,12 @@
-["tgBidAdapter"]
+[
+"tgBidAdapter",
+"criteoBidAdapter",
+"mobfoxBidAdapter",
+"pubmaticBidAdapter",
+"openxBidAdapter",
+"rubiconAnalyticsAdapter",
+"rubiconBidAdapter",
+"nasmediaAdmixerBidAdapter",
+"appnexusAnalyticsAdapter",
+"appnexusBidAdapter"
+]

@@ -8,91 +8,184 @@
 -->
 
 <html>
-  <head>
-      <script>
-        var PREBID_TIMEOUT = 700;
-  
+
+<head>
+    <script>
+        var PREBID_TIMEOUT = 100;
+        /*
+                var adUnits = [{
+                    code: 'div-gpt-ad-1460505748561-0',
+                    sizes: [
+                        [300, 250],
+                        [300, 600]
+                    ],
+                    // Replace this object to test a new Adapter!
+                    bids: [
+                        /*              
+                                      {
+                                        bidder: 'appnexusAst',
+                                        params: {
+                                            placementId: '10433394'
+                                        }
+                                    },
+                                    */
+        /*
+                {
+                    bidder: 'tg',
+                    params: {
+                        wh: '300X250',
+                        zoneid: '20516', // required parameter
+                        location_signature: '67388f1834f7d6243b753ec33584a8df', // required parameter
+                        affiliateid: '10422',
+                        tagid: 'test',
+                        gender: 'F'
+                        yob: '2014'
+                    }
+                }
+                ]
+                }]; 
+                */
+
         var adUnits = [{
-          code: 'div-gpt-ad-1460505748561-0',
-          sizes: [[300, 250], [300,600]],
-  
-          // Replace this object to test a new Adapter!
-          bids: [{
-            bidder: 'appnexusAst',
-            params: {
-              placementId: '10433394'
-            }
-          }]
-  
-        }];
-  
-        var pbjs = pbjs || {};
-        pbjs.que = pbjs.que || [];
-  
-      </script>
-  
-      <script type="text/javascript" src="../../prebid.js" async></script>
-      <script>
+                    code: 'banner-ad-div',
+                    sizes: [
+                        [300, 250]
+                    ],
+                    bids: [{
+                        bidder: 'tg',
+                        params: {
+                            zoneid: '20516', // required parameter 
+                            location_signature: '67388f1834f7d6243b753ec33584a8df', // required parameter 
+                            wh: '300X250',
+                            affiliateid: '10422',
+                            tagid: '486653',
+                            gender: 'F',
+                            yob: ' 2014',
+                            buyeruid: '55816b39711f9b5acf3b90e313ed29e51665623f',
+                            hceid: '55816b39711f9b5acf3b90e313ed29e51665623f',
+                            gdprConsent: {
+                                gdprApplies: 0,
+                                consentString: ''
+                            }
+                        }
+                    }, {
+                        code: 'native-ad-div',
+                        sizes: [
+                            [0, 0]
+                        ],
+                        n
+                        ativeParams: {
+                            title: {
+                                required: true,
+                                len: 75
+                            },
+                            image: {
+                                required: true
+                            },
+                            body: {
+                                len: 200
+                            },
+                            sponsoredBy: {
+                                len: 20
+                            }
+                        },
+                        bids: [{
+                            bidder: 'tg',
+                            params: {
+                                zoneid: '20516', // required parameter 
+                                location_signature: '67388f1834f7d6243b753ec33584a8df', // required parameter 
+                                affiliateid: '10422',
+                                tagid: '486653',
+                                gender: 'F',
+                                yob: ' 2014',
+                                buyeruid: '55816b39711f9b5acf3b90e313ed29e51665623f',
+                                hceid: '55816b39711f9b5acf3b90e313ed29e51665623f',
+                                gdprConsent: {
+                                    gdprApplies: 0,
+                                    consentString: ''
+                                }
+                            }
+                        }]
+                    }];
+
+                    var pbjs = pbjs || {};
+                    pbjs.que = pbjs.que || [];
+                    pbjs.setConfig({
+                        userSync: {
+                            iframeEnabled: true,
+                            enabledBidders: ["tg"],
+                            syncDelay: 6000
+                        }
+                    });
+    </script>
+
+    <script type="text/javascript" src="../../prebid.js" async></script>
+    <script>
         var googletag = googletag || {};
         googletag.cmd = googletag.cmd || [];
         googletag.cmd.push(function() {
-          googletag.pubads().disableInitialLoad();
+            googletag.pubads().disableInitialLoad();
         });
-  
+
         pbjs.que.push(function() {
-          pbjs.addAdUnits(adUnits);
-          pbjs.requestBids({
-            bidsBackHandler: sendAdserverRequest
-          });
-        });
-  
-        function sendAdserverRequest() {
-          if (pbjs.adserverRequestSent) return;
-          pbjs.adserverRequestSent = true;
-          googletag.cmd.push(function() {
-            pbjs.que.push(function() {
-              pbjs.setTargetingForGPTAsync();
-              googletag.pubads().refresh();
+            pbjs.addAdUnits(adUnits);
+            pbjs.requestBids({
+                bidsBackHandler: sendAdserverRequest
             });
-          });
-        }
-  
-        setTimeout(function() {
-          sendAdserverRequest();
-        }, PREBID_TIMEOUT);
-  
-      </script>
-  
-      <script>
-        (function () {
-          var gads = document.createElement('script');
-          gads.async = true;
-          gads.type = 'text/javascript';
-          var useSSL = 'https:' == document.location.protocol;
-          gads.src = (useSSL ? 'https:' : 'http:') +
-            '//www.googletagservices.com/tag/js/gpt.js';
-          var node = document.getElementsByTagName('script')[0];
-          node.parentNode.insertBefore(gads, node);
-        })();
-      </script>
-  
-      <script>
-        googletag.cmd.push(function () {
-          googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600]], 'div-gpt-ad-1460505748561-0').addService(googletag.pubads());
-  
-          googletag.pubads().enableSingleRequest();
-          googletag.enableServices();
         });
-      </script>
-  </head>
-  
-  <body>
-  <h2>Prebid.js Test</h2>
-  <h5>Div-1</h5>
-  <div id='div-gpt-ad-1460505748561-0'>
-      <script type='text/javascript'>
-        googletag.cmd.push(function() { googletag.display('div-gpt-ad-1460505748561-0'); });
-      </script>
-  </div>
-  </body>
-  </html>
+
+        function sendAdserverRequest() {
+            if (pbjs.adserverRequestSent) return;
+            pbjs.adserverRequestSent = true;
+            googletag.cmd.push(function() {
+                pbjs.que.push(function() {
+                    pbjs.setTargetingForGPTAsync();
+                    googletag.pubads().refresh();
+                });
+            });
+        }
+
+        setTimeout(function() {
+            sendAdserverRequest();
+        }, PREBID_TIMEOUT);
+    </script>
+
+    <script>
+        (function() {
+            var gads = document.createElement('script');
+            gads.async = true;
+            gads.type = 'text/javascript';
+            var useSSL = 'https:' == document.location.protocol;
+            gads.src = (useSSL ? 'https:' : 'http:') +
+                '//www.googletagservices.com/tag/js/gpt.js';
+            var node = document.getElementsByTagName('script')[0];
+            node.parentNode.insertBefore(gads, node);
+        })();
+    </script>
+
+    <script>
+        googletag.cmd.push(function() {
+            googletag.defineSlot('/19968336/header-bid-tag-0', [
+                [300, 250],
+                [300, 600]
+            ], 'div-gpt-ad-1460505748561-0').addService(googletag.pubads());
+
+            googletag.pubads().enableSingleRequest();
+            googletag.enableServices();
+        });
+    </script>
+</head>
+
+<body>
+    <h2>Prebid.js Test</h2>
+    <h5>Div-1</h5>
+    <div id='div-gpt-ad-1460505748561-0'>
+        <script type='text/javascript'>
+            googletag.cmd.push(function() {
+                googletag.display('div-gpt-ad-1460505748561-0');
+            });
+        </script>
+    </div>
+</body>
+
+</html>
