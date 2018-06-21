@@ -149,8 +149,8 @@ export const spec = {
 
     // Attaching GDPR Consent Params in UserSync url
     if (gdprConsent) {
-      syncurl += '&gdpr=' + (gdprConsent.gdprApplies ? 1 : 0);
-      syncurl += '&gdpr_consent=' + encodeURIComponent(gdprConsent.consentString || '');
+      syncurl += '&gdpr=' + ((gdprConsent.gdprApplies) ? 1 : 0);
+      if (gdprConsent.consentString) syncurl += '&gdpr_consent=' + encodeURIComponent(gdprConsent.consentString || '');
     }
 
     if (syncOptions.iframeEnabled) {
@@ -284,7 +284,7 @@ function impression(slot) {
     // Attaching GDPR Consent Params
     regs: {
       ext: {
-        gdpr: gdprApplies(slot)
+        gdpr: getGDPRApplies(slot)
           //        ((slot.params.gdprConsent.gdprApplies) ? 1 : 0)
       }
     },
@@ -624,7 +624,7 @@ function applyGdpr(bidderRequest, ortbRequest) {
  * GDPR Consent
  * @param {*} slot
  */
-function gdprApplies(slot) {
+function getGDPRApplies(slot) {
   if (!slot.params.gdprConsent) return false;
   return (slot.params.gdprConsent.gdprApplies) ? true : false;
 }
