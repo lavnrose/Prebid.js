@@ -33,6 +33,9 @@ import {
 import {
     parse
 } from 'src/url';
+import {
+    loadExternalScript
+} from 'src/adloader';
 
 // const constants = require('src/constants.json');
 // const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE, NATIVEVIDEO];
@@ -168,9 +171,9 @@ export const spec = {
 function bidResponseAvailable(bidRequest, bidResponse) {
     const idToImpMap = {};
     const idToBidMap = {};
-    bidResponse = bidResponse.body
-        // extract the request bids and the response bids, keyed by impr-id
-    const = parse(bidRequest.data);
+    // bidResponse = bidResponse.body;
+    const ortbRequest = parse(bidRequest.data);
+    // extract the request bids and the response bids, keyed by impr-id
     ortbRequest.imp.forEach(imp => {
         idToImpMap[imp.id] = imp;
     });
