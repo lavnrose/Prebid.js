@@ -149,7 +149,7 @@ export const spec = {
 
     // Attaching GDPR Consent Params in UserSync url
     if (gdprConsent) {
-      syncurl += '&gdpr=' + ((gdprConsent.gdprApplies) ? 1 : 0);
+      if (gdprConsent.gdprApplies) syncurl += '&gdpr=' + ((gdprConsent.gdprApplies) ? 1 : 0);
       if (gdprConsent.consentString) syncurl += '&gdpr_consent=' + encodeURIComponent(gdprConsent.consentString || '');
     }
 
@@ -275,7 +275,7 @@ function impression(slot) {
     bidfloorcur: DEFAULT_CURRENCY,
     bidfloor: slot.params.bidFloor || '0.000001',
     secure: isSecure(),
-    tagid: slot.params.tagid.toString(),
+    tagid: slot.params.tagid,
     banner: banner(slot),
     native: nativeImpression(slot),
     video: videoImpression(slot),
@@ -289,8 +289,8 @@ function impression(slot) {
       }
     },
     ext: {
-      zoneid: slot.params.zoneid.toString(),
-      cat: slot.params.cat.toString(),
+      zoneid: slot.params.zoneid,
+      cat: (slot.params.cat) ? slot.params.cat : slot.params.tagid,
     }
   };
 }
@@ -613,10 +613,12 @@ function applyGdpr(bidderRequest, ortbRequest) {
   if (bidderRequest && bidderRequest.gdprConsent) {
     if (!ortbRequest.regs) ortbRequest.regs = {};
     if (!ortbRequest.regs.ext) ortbRequest.regs.ext = {};
-    ortbRequest.regs.ext.gdpr = bidderRequest.gdprConsent.gdprApplies ? 1 : 0;
+    if (bidderRequest.gdprConsent && bidderRequest.gdprConsent.gdprApplies) {
+      ortbRequest.regs.ext.gdpr = bidderRequest.gdprConsent.gdprApplies ? 1 : 0;
+      ortbRequest.user.ext.consent = (bidderRequest.gdprConsent.consentString) ? bidderRequest.gdprConsent.consentString : 0;
+    }
     if (!ortbRequest.user) rtbRequest.user = {};
     if (!ortbRequest.user.ext) ortbRequest.user.ext = {};
-    ortbRequest.user.ext.consent = bidderRequest.gdprConsent.consentString ? bidderRequest.gdprConsent.consentString : 0;
   }
 }
 
