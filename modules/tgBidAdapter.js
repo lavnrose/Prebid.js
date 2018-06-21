@@ -284,8 +284,8 @@ function impression(slot) {
     // Attaching GDPR Consent Params
     regs: {
       ext: {
-        gdpr: gdprApplies()
-//        ((slot.params.gdprConsent.gdprApplies) ? 1 : 0)
+        gdpr: gdprApplies(slot)
+          //        ((slot.params.gdprConsent.gdprApplies) ? 1 : 0)
       }
     },
     ext: {
@@ -621,14 +621,12 @@ function applyGdpr(bidderRequest, ortbRequest) {
 }
 
 /**
- * GDPR Consent 
- * @param {*} slot 
+ * GDPR Consent
+ * @param {*} slot
  */
 function gdprApplies(slot) {
-  if (slot.params.gdprConsent) {
-    return (slot.params.gdprConsent.gdprApplies) ? true : false;
-  }
-  return false;
+  if (!slot.params.gdprConsent) return false;
+  return (slot.params.gdprConsent.gdprApplies) ? true : false;
 }
 
 
