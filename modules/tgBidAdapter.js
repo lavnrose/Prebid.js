@@ -170,7 +170,7 @@ function bidResponseAvailable(bidRequest, bidResponse) {
     const idToBidMap = {};
     bidResponse = bidResponse.body
         // extract the request bids and the response bids, keyed by impr-id
-    const ortbRequest = parse(bidRequest.data);
+    const = parse(bidRequest.data);
     ortbRequest.imp.forEach(imp => {
         idToImpMap[imp.id] = imp;
     });
@@ -549,6 +549,7 @@ function getLanguage() {
  * Safely parses the input given. Returns null on
  * parsing failure.
  */
+/*
 function parse(rawResponse) {
     try {
         if (rawResponse) {
@@ -559,7 +560,7 @@ function parse(rawResponse) {
     }
     return null;
 }
-
+/*
 /**
  * Determines the AdSize for the slot.
  */
