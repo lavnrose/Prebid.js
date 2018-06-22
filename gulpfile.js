@@ -29,6 +29,34 @@ var sourcemaps = require('gulp-sourcemaps');
 var through = require('through2');
 var fs = require('fs');
 var jsEscape = require('gulp-js-escape');
+var cors = require('cors');
+var browserSync = require('browser-sync');
+
+gulp.task('browser-sync', function() {
+  browserSync.init({
+    notify: false,
+    //      proxy:"localhost:8000"
+    proxy: "adtg.widerplanet.com"
+  });
+});
+
+/*
+gulp.task('connect', function() {
+  connect.server({
+    root: 'app',
+    middleware: function() {
+        return [cors()];
+    }
+  });
+});
+*/
+
+/*
+http://adtg.widerplanet.com/delivery/pdirect.php?sl=prebid:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.
+Origin 'http://michael-local.widerplanet.com:9999' is therefore not allowed access.
+
+*/
 
 var prebid = require('./package.json');
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
@@ -37,17 +65,17 @@ var analyticsDirectory = '../analytics';
 var port = 9999;
 
 // Tasks
-gulp.task('default', ['webpack']);
+gulp.task('default', ['webpack', 'browser-sync']);
 
-gulp.task('serve', ['lint', 'build-bundle-dev', 'watch', 'test']);
+gulp.task('serve', ['lint', 'build-bundle-dev', 'watch', 'test', 'browser-sync']);
 
-gulp.task('serve-nw', ['lint', 'watch', 'e2etest']);
+gulp.task('serve-nw', ['lint', 'watch', 'e2etest', 'browser-sync']);
 
 gulp.task('run-tests', ['lint', 'test-coverage']);
 
 gulp.task('build', ['build-bundle-prod']);
 
-gulp.task('clean', function () {
+gulp.task('clean', function() {
   return gulp.src(['build'], {
       read: false
     })
@@ -78,13 +106,13 @@ var explicitModules = [
 
 function bundle(dev, moduleArr) {
   var modules = moduleArr || helpers.getArgModules(),
-      allModules = helpers.getModuleNames(modules);
+    allModules = helpers.getModuleNames(modules);
 
-  if(modules.length === 0) {
+  if (modules.length === 0) {
     modules = allModules.filter(module => !explicitModules.includes(module));
   } else {
     var diff = _.difference(modules, allModules);
-    if(diff.length !== 0) {
+    if (diff.length !== 0) {
       throw new gutil.PluginError({
         plugin: 'bundle',
         message: 'invalid modules: ' + diff.join(', ')
@@ -108,19 +136,18 @@ function bundle(dev, moduleArr) {
   return gulp.src(
       entries
     )
-    .pipe(gulpif(dev, sourcemaps.init({loadMaps: true})))
+    .pipe(gulpif(dev, sourcemaps.init({ loadMaps: true })))
     .pipe(concat(outputFileName))
     .pipe(gulpif(!argv.manualEnable, footer('\n<%= global %>.processQueue();', {
-        global: prebid.globalVarName
-      }
-    )))
+      global: prebid.globalVarName
+    })))
     .pipe(gulpif(dev, sourcemaps.write('.')));
 }
 
 // Workaround for incompatibility between Karma & gulp callbacks.
 // See https://github.com/karma-runner/gulp-karma/issues/18 for some related discussion.
 function newKarmaCallback(done) {
-  return function (exitCode) {
+  return function(exitCode) {
     if (exitCode) {
       done(new Error('Karma tests failed with exit code ' + exitCode));
     } else {
@@ -141,7 +168,7 @@ gulp.task('bundle-to-stdout', function() {
   nodeBundle().then(file => console.log(file));
 });
 
-gulp.task('devpack', ['clean'], function () {
+gulp.task('devpack', ['clean'], function() {
   var cloned = _.cloneDeep(webpackConfig);
   cloned.devtool = 'source-map';
   var externalModules = helpers.getArgModules();
@@ -157,7 +184,7 @@ gulp.task('devpack', ['clean'], function () {
     .pipe(connect.reload());
 });
 
-gulp.task('webpack', ['clean'], function () {
+gulp.task('webpack', ['clean'], function() {
   var cloned = _.cloneDeep(webpackConfig);
 
   delete cloned.devtool;
@@ -186,7 +213,7 @@ gulp.task('webpack', ['clean'], function () {
 // If --file "<path-to-test-file>" is given, the task will only run tests in the specified file.
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 // If --browsers is given, browsers can be chosen explicitly. e.g. --browsers=chrome,firefox,ie9
-gulp.task('test', ['clean'], function (done) {
+gulp.task('test', ['clean'], function(done) {
   var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch, argv.file);
 
   var browserOverride = helpers.parseBrowserArgs(argv).map(helpers.toCapitalCase);
@@ -203,13 +230,16 @@ gulp.task('test-coverage', ['clean'], function(done) {
 });
 
 // View the code coverage report in the browser.
-gulp.task('view-coverage', function (done) {
+gulp.task('view-coverage', function(done) {
   var coveragePort = 1999;
 
   connect.server({
     port: coveragePort,
     root: 'build/coverage/karma_html',
-    livereload: false
+    livereload: false,
+    middleware: function() {
+      return [cors()];
+    }
   });
   opens('http://localhost:' + coveragePort);
   done();
@@ -218,12 +248,12 @@ gulp.task('view-coverage', function (done) {
 gulp.task('coveralls', ['test-coverage'], function() { // 2nd arg is a dependency: 'test' must be finished
   // first send results of istanbul's test coverage to coveralls.io.
   return gulp.src('gulpfile.js', { read: false }) // You have to give it a file, but you don't
-  // have to read it.
+    // have to read it.
     .pipe(shell('cat build/coverage/lcov.info | node_modules/coveralls/bin/coveralls.js'));
 });
 
 // Watch Task with Live Reload
-gulp.task('watch', function () {
+gulp.task('watch', function() {
   gulp.watch([
     'src/**/*.js',
     'modules/**/*.js',
@@ -238,7 +268,10 @@ gulp.task('watch', function () {
     https: argv.https,
     port: port,
     root: './',
-    livereload: true
+    livereload: true,
+    middleware: function() {
+      return [cors()];
+    }
   });
 });
 
@@ -249,14 +282,14 @@ gulp.task('lint', () => {
     .pipe(eslint.failAfterError());
 });
 
-gulp.task('clean-docs', function () {
+gulp.task('clean-docs', function() {
   del(['docs']);
 });
 
-gulp.task('docs', ['clean-docs'], function () {
+gulp.task('docs', ['clean-docs'], function() {
   return gulp.src('src/prebid.js')
     .pipe(gulpDocumentation('md'))
-    .on('error', function (err) {
+    .on('error', function(err) {
       gutil.log('`gulp-documentation` failed:', err.message);
     })
     .pipe(gulp.dest('docs'));
@@ -264,7 +297,7 @@ gulp.task('docs', ['clean-docs'], function () {
 
 gulp.task('e2etest', ['devpack', 'webpack'], function() {
   var cmdQueue = [];
-  if(argv.browserstack) {
+  if (argv.browserstack) {
     var browsers = require('./browsers.json');
     delete browsers['bs_ie_9_windows_7'];
 
@@ -276,11 +309,11 @@ gulp.task('e2etest', ['devpack', 'webpack'], function() {
 
     var startWith = 'bs';
 
-    Object.keys(browsers).filter(function(v){
+    Object.keys(browsers).filter(function(v) {
       return v.substring(0, startWith.length) === startWith && browsers[v].browser !== 'iphone';
-    }).map(function(v,i,arr) {
-      var newArr = (i%2 === 0) ? arr.slice(i,i+2) : null;
-      if(newArr) {
+    }).map(function(v, i, arr) {
+      var newArr = (i % 2 === 0) ? arr.slice(i, i + 2) : null;
+      if (newArr) {
         var cmd = 'nightwatch --env ' + newArr.join(',') + cmdStr;
         cmdQueue.push(cmd);
       }
@@ -298,7 +331,8 @@ gulp.task('e2etest-report', function() {
   connect.server({
     port: reportPort,
     root: './',
-    livereload: true
+    livereload: true,
+    middleware: function() { return [cors()]; }
   });
 
   setTimeout(function() {

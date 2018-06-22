@@ -145,7 +145,8 @@ export const spec = {
    * @return {Cm[]} An array of bids which were nested inside the server.
    */
   getUserSyncs: (syncOptions, response, gdprConsent) => {
-    let syncurl = CM_USYNCURL + publisherId;
+    // let syncurl = CM_USYNCURL + publisherId;
+    let syncurl = CM_USYNCURL;
 
     // Attaching GDPR Consent Params in UserSync url
     if (gdprConsent) {
@@ -290,6 +291,7 @@ function impression(slot) {
     },
     ext: {
       zoneid: slot.params.zoneid,
+      location_signature: slot.params.location_signature,
       cat: (slot.params.cat) ? slot.params.cat : slot.params.tagid,
     }
   };
