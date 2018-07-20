@@ -9,15 +9,16 @@
 Connects to TargetingGates demand source to fetch bids.  
 Banner, Outstream and Native formats are supported.  
 Please use `tg` as the bidder code.
-`targetinggate` and `targetinggates` aliases also supported as well.
+`targetinggate`, `targetinggates` and `widerplanet` aliases also supported as well.
 
 Publisher should get required value from Wider Planet, as below
 
-**affiliateid**: Media ID
+**affiliateid**: Media ID (Issue one media id for one media)
 
-**zoneid**: Slot ID
+**zoneid**: Slot ID 
 
-**location_signature**: Media Token
+**location_signature**: Media Token, this called as `API Key`, you have to request to wider planet's media team.
+
 
 # Test Parameters
 
