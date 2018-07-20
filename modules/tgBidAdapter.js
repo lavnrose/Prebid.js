@@ -1,5 +1,6 @@
-/**
- *
+/* jshint esversion: 6 */
+/* eslint dot-notation:0, quote-props:0, eol-last: 0 */
+/*
  * TargetingGates Bid Adapter by Wider Planet, Inc.
  *
  * Contact: adcon-team@widerplanet.com
@@ -9,26 +10,23 @@
  *
  * References: xhbBidAdapter, rtbdemandadk, pubmatic, platformio
  *
- * eslint dot-notation:0, quote-props:0
- *
  */
 
-import { config } from 'src/config';
 import { registerBidder } from 'src/adapters/bidderFactory';
-import { userSync } from 'src/userSync';
-// import { BANNER, VIDEO, NATIVE, NATIVEVIDEO } from 'src/mediaTypes';
 import { BANNER, VIDEO, NATIVE } from 'src/mediaTypes';
 import { parse } from 'src/url';
 import * as utils from 'src/utils';
-//import { loadExternalScript } from 'src/adloader';
+// import { config } from 'src/config';
+// import { userSync } from 'src/userSync';
+// import { BANNER, VIDEO, NATIVE, NATIVEVIDEO } from 'src/mediaTypes';
+// import { loadExternalScript } from 'src/adloader';
 
-// const constants = require('src/constants.json');
-// const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE, NATIVEVIDEO];
-// const BIDDER_ALIASES = ['targetinggate', 'targetinggates'];
-
-const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE];
 const BIDDER_CODE = 'tg';
+// const constants = require('src/constants.json');
+const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE];
+// const SUPPORTED_AD_TYPES = [BANNER, VIDEO, NATIVE, NATIVEVIDEO];
 const BIDDER_ALIASES = ['targetinggate', 'widerplanet'];
+// const BIDDER_ALIASES = ['targetinggate', 'targetinggates'];
 
 // const BIDDER_CONFIG = 'hb_pb';
 // const BIDDER_VERSION = '1.0.0';
@@ -48,8 +46,7 @@ const DEFAULT_BID_TTL = 20;
 const DEFAULT_CURRENCY = 'KRW';
 const DEFAULT_NET_REVENUE = true;
 const AUCTION_TYPE = 1; // First Price Acution in Header Bidding
-const TEST_BID = 1; // Test Bid
-const UNDEFINED = undefined;
+const TEST_BID = 0; // Test Bid
 
 /*
 const CUSTOM_PARAMS = {
@@ -77,11 +74,8 @@ const DEFAULT_MIMES = ['video/mp4', 'video/webm', 'application/x-shockwave-flash
 const VIDEO_TARGETING = ['mimes', 'skippable', 'playback_method', 'protocols', 'api'];
 const DEFAULT_PROTOCOLS = [2, 3, 5, 6];
 const DEFAULT_APIS = [1, 2];
-
-
 const CM_USYNCURL = '//astg.widerplanet.com/delivery/wpg.php?affiliateid=';
 const BIDDER_ENDPOINT_URL = '//adtg.widerplanet.com/delivery/pdirect.php?sl=prebid';
-// const BIDDER_ENDPOINT_URL = '//hbopenbid.pubmatic.com/translator?source=prebid-client';
 
 export const spec = {
   code: BIDDER_CODE,
@@ -89,7 +83,6 @@ export const spec = {
   aliases: BIDDER_ALIASES,
   //    isBidRequestValid: bid => (!!(bid && bid.params && bid.params.affiliateid && bid.params.tagid && bid.params.zoneid && bid.params.location_signature)),
   isBidRequestValid: (bid) => {
-
     if (!bid || !bid.params) {
       utils.logWarn('TargetingGates: Please use valid bid parameters.');
       return false;
@@ -106,7 +99,7 @@ export const spec = {
     const request = {
       id: bidRequests[0].bidderRequestId,
       at: AUCTION_TYPE,
-      test: TEST_BID,
+      test: (TEST_BID > 0) ? TEST_BID : 0,
       imp: bidRequests.map(slot => impression(slot)),
       site: site(bidRequests),
       app: app(bidRequests),
@@ -120,7 +113,6 @@ export const spec = {
     };
     utils.logInfo('TargetingGates: [REQUEST] ' + JSON.stringify(PreBidRequest));
     return PreBidRequest;
-
   },
 
   /**
@@ -201,24 +193,23 @@ function bidResponseAvailable(bidRequest, bidResponse) {
         currency: DEFAULT_CURRENCY
       };
 
-      if (idToImpMap[id]['native']) {
-        bid['native'] = nativeResponse(idToImpMap[id], idToBidMap[id]);
+      if (idToImpMap[id].native) {
+        bid.native = nativeResponse(idToImpMap[id], idToBidMap[id]);
         let nurl = idToBidMap[id].nurl;
         nurl = nurl.replace(/\$(%7B|\{)AUCTION_IMP_ID(%7D|\})/gi, idToBidMap[id].impid);
         nurl = nurl.replace(/\$(%7B|\{)AUCTION_PRICE(%7D|\})/gi, idToBidMap[id].price);
         nurl = nurl.replace(/\$(%7B|\{)AUCTION_CURRENCY(%7D|\})/gi, bidResponse.cur);
         nurl = nurl.replace(/\$(%7B|\{)AUCTION_BID_ID(%7D|\})/gi, bidResponse.bidid);
-        bid['native']['impressionTrackers'] = [nurl];
+        bid.native.impressionTrackers = [nurl];
         bid.mediaType = 'native';
-
-      } else if (idToImpMap[id]['video']) {
+      } else if (idToImpMap[id].video) {
         bid.vastUrl = idToBidMap[id].adm;
         bid.vastUrl = bid.vastUrl.replace(/\$(%7B|\{)AUCTION_PRICE(%7D|\})/gi, idToBidMap[id].price);
         bid.crid = idToBidMap[id].crid;
         bid.width = idToImpMap[id].video.w;
         bid.height = idToImpMap[id].video.h;
         bid.mediaType = 'video';
-      } else if (idToImpMap[id]['banner']) {
+      } else if (idToImpMap[id].banner) {
         bid.ad = idToBidMap[id].adm;
         bid.ad = bid.ad.replace(/\$(%7B|\{)AUCTION_IMP_ID(%7D|\})/gi, idToBidMap[id].impid);
         bid.ad = bid.ad.replace(/\$(%7B|\{)AUCTION_AD_ID(%7D|\})/gi, idToBidMap[id].adid);
@@ -235,7 +226,7 @@ function bidResponseAvailable(bidRequest, bidResponse) {
         bid.dealChannel = dealChannelValues[bid.ext.deal_channel] || null;
       }
 
-      applyExt(bid, idToBidMap[id])
+      applyExt(bid, idToBidMap[id]);
       bids.push(bid);
     }
   });
@@ -285,8 +276,7 @@ function impression(slot) {
     // Attaching GDPR Consent Params
     regs: {
       ext: {
-        gdpr: getGDPRApplies(slot)
-          //        ((slot.params.gdprConsent.gdprApplies) ? 1 : 0)
+        gdpr: getGDPRApplies(slot) // ((slot.params.gdprConsent.gdprApplies) ? 1 : 0)
       }
     },
     ext: {
@@ -426,7 +416,7 @@ function site(bidderRequest) {
       },
       ref: referrer(),
       page: utils.getTopWindowLocation().href,
-    }
+    };
   }
   return null;
 }
@@ -447,7 +437,7 @@ function app(bidderRequest) {
       publisher: {
         id: pubId.toString(),
       },
-    }
+    };
   }
   return null;
 }
@@ -477,6 +467,7 @@ function device(bidderRequest) {
     js: 1,
     dnt: (navigator.doNotTrack == 'yes' || navigator.doNotTrack == '1' || navigator.msDoNotTrack == '1') ? 1 : 0,
     // dnt: utils.getDNT() ? 1 : 0,
+    make: navigator.vendor ? navigator.vendor : '',
     // ip:
     // os: 'iOS',
     // osv: '6.1',
@@ -501,24 +492,17 @@ function device(bidderRequest) {
   };
   /*
     bid_floor: parseFloat(bidRequest.params.floor) > 0 ? bidRequest.params.floor : 0,
-
     charset: document.charSet || document.characterSet,
-
     site_domain: document.location.hostname,
     site_page: window.location.href,
     subid: 'hb',
     tmax: bidderRequest.timeout,
-    hb: '1',
     name: document.location.hostname,
-
     width: parse.width,
     height: parse.height,
     device_width: screen.width,
     device_height: screen.height,
-
-    dnt: (navigator.doNotTrack == 'yes' || navigator.doNotTrack == '1' || navigator.msDoNotTrack == '1') ? 1 : 0,
     secure: isSecure(),
-    make: navigator.vendor ? navigator.vendor : '',
   */
 }
 
@@ -607,7 +591,6 @@ function getUser(slot) {
   };
 }
 
-
 /**
  * Applies GDPR parameters to request.
  */
@@ -630,34 +613,35 @@ function applyGdpr(bidderRequest, ortbRequest) {
  */
 function getGDPRApplies(slot) {
   if (!slot.params.gdprConsent) return false;
-  return (slot.params.gdprConsent.gdprApplies) ? true : false;
+  return (slot.params.gdprConsent.gdprApplies);
+  // ? true : false;
 }
-
 
 /**
  * Parses the native response from the Bid given.
  */
 function nativeResponse(imp, bid) {
-  if (imp['native']) {
+  if (imp.native) {
     const nativeAd = parse(bid.adm);
     const keys = {};
-    if (nativeAd && nativeAd['native'] && nativeAd['native'].assets) {
-      nativeAd['native'].assets.forEach(asset => {
+    if (nativeAd && nativeAd.native && nativeAd.native.assets) {
+      nativeAd.native.assets.forEach(asset => {
         keys.title = asset.title ? asset.title.text : keys.title;
         keys.body = asset.data && asset.data.type === 2 ? asset.data.value : keys.body;
         keys.sponsoredBy = asset.data && asset.data.type === 1 ? asset.data.value : keys.sponsoredBy;
         keys.image = asset.img && asset.img.type === 3 ? asset.img.url : keys.image;
         keys.icon = asset.img && asset.img.type === 1 ? asset.img.url : keys.icon;
       });
-      if (nativeAd['native'].link) {
-        keys.clickUrl = encodeURIComponent(nativeAd['native'].link.url);
+      if (nativeAd.native.link) {
+        keys.clickUrl = encodeURIComponent(nativeAd.native.link.url);
       }
-      keys.impressionTrackers = nativeAd['native'].imptrackers;
+      keys.impressionTrackers = nativeAd.native.imptrackers;
       return keys;
     }
   }
   return null;
 }
 
-registerBidder(spec);
 // utils.logInfo('TargetingGates: [INIT] ' + JSON.stringify(spec));
+
+registerBidder(spec);
